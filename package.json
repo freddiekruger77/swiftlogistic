@@ -1,0 +1,34 @@
+{
+  "name": "swiftlogistics-platform",
+  "version": "1.0.0",
+  "description": "Modern logistics management platform with real-time package tracking and admin panel",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -p 8000 -o",
+    "dev": "npx http-server -p 8000 -o",
+    "serve": "npx http-server -p 8000",
+    "deploy": "echo 'Push to main branch to deploy to GitHub Pages'"
+  },
+  "keywords": [
+    "logistics",
+    "tracking",
+    "shipping",
+    "package-management",
+    "react",
+    "tailwind"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/swiftlogistics-platform.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/swiftlogistics-platform/issues"
+  },
+  "homepage": "https://yourusername.github.io/swiftlogistics-platform"
+}
