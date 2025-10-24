@@ -74,11 +74,11 @@ Upload the `index.html` file to any web hosting service:
 ## 🔐 Admin Access
 
 **Default Admin Credentials:**
-- Password: `admin123`
+- Password: `grandson707@`
 
 To change the admin password, edit line in the HTML file:
 ```javascript
-if (adminPassword === 'admin123') {
+if (adminPassword === 'grandson707@') {
 ```
 
 ## 📦 Demo Tracking Numbers

@@ -94,6 +94,29 @@
             const [editingPackage, setEditingPackage] = useState(null);
             const [showCreateModal, setShowCreateModal] = useState(false);
             const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const [userLoggedIn, setUserLoggedIn] = useState(false);
+            const [userCredentials, setUserCredentials] = useState({
+                username: '',
+                password: ''
+            });
+            const [currentUser, setCurrentUser] = useState('');
+            const [userLoginError, setUserLoginError] = useState('');
+            const [signUpCredentials, setSignUpCredentials] = useState({
+                username: '',
+                password: '',
+                confirmPassword: '',
+                email: ''
+            });
+            const [signUpError, setSignUpError] = useState('');
+
+            // Check for existing user session on component mount
+            useEffect(() => {
+                const savedUser = localStorage.getItem('swiftLogisticsUser');
+                if (savedUser) {
+                    setUserLoggedIn(true);
+                    setCurrentUser(savedUser);
+                }
+            }, []);
             const [newPackage, setNewPackage] = useState({
                 recipient: '',
                 origin: '',
@@ -108,13 +131,121 @@
             };
 
             const handleAdminLogin = () => {
-                if (adminPassword === 'admin123') {
+                if (adminPassword === 'grandson707@') {
                     setIsAdminLoggedIn(true);
                     setCurrentPage('admin');
                     setAdminPassword('');
                 } else {
-                    alert('Invalid password. Try: admin123');
+                    alert('Invalid password.');
                 }
+            };
+
+            const handleUserLogin = () => {
+                // Clear any previous errors
+                setUserLoginError('');
+                
+                // Form validation
+                if (!userCredentials.username.trim()) {
+                    setUserLoginError('Username is required');
+                    return;
+                }
+                
+                if (!userCredentials.password.trim()) {
+                    setUserLoginError('Password is required');
+                    return;
+                }
+                
+                // Check stored users first
+                const existingUsers = JSON.parse(localStorage.getItem('swiftLogisticsUsers') || '[]');
+                const user = existingUsers.find(u => u.username === userCredentials.username && u.password === userCredentials.password);
+                
+                if (user) {
+                    setUserLoggedIn(true);
+                    setCurrentUser(userCredentials.username);
+                    localStorage.setItem('swiftLogisticsUser', userCredentials.username);
+                    setCurrentPage('home');
+                    setUserCredentials({ username: '', password: '' });
+                    alert('Login successful! Welcome back to SwiftLogistics.');
+                } else if (userCredentials.username === 'demo' && userCredentials.password === 'password') {
+                    // Keep demo account for testing
+                    setUserLoggedIn(true);
+                    setCurrentUser(userCredentials.username);
+                    localStorage.setItem('swiftLogisticsUser', userCredentials.username);
+                    setCurrentPage('home');
+                    setUserCredentials({ username: '', password: '' });
+                    alert('Login successful! Welcome to SwiftLogistics.');
+                } else {
+                    setUserLoginError('Invalid username or password. Try demo/password or create an account.');
+                }
+            };
+
+            const handleUserLogout = () => {
+                setUserLoggedIn(false);
+                setCurrentUser('');
+                localStorage.removeItem('swiftLogisticsUser');
+                setUserCredentials({ username: '', password: '' });
+                setCurrentPage('home');
+                alert('You have been logged out successfully.');
+            };
+
+            const handleSignUp = () => {
+                // Clear any previous errors
+                setSignUpError('');
+                
+                // Form validation
+                if (!signUpCredentials.username.trim()) {
+                    setSignUpError('Username is required');
+                    return;
+                }
+                
+                if (!signUpCredentials.email.trim()) {
+                    setSignUpError('Email is required');
+                    return;
+                }
+                
+                if (!signUpCredentials.password.trim()) {
+                    setSignUpError('Password is required');
+                    return;
+                }
+                
+                if (signUpCredentials.password !== signUpCredentials.confirmPassword) {
+                    setSignUpError('Passwords do not match');
+                    return;
+                }
+                
+                if (signUpCredentials.password.length < 6) {
+                    setSignUpError('Password must be at least 6 characters long');
+                    return;
+                }
+                
+                // Placeholder sign up logic
+                // In a real application, this would make an API call to create the account
+                const existingUsers = JSON.parse(localStorage.getItem('swiftLogisticsUsers') || '[]');
+                
+                // Check if username already exists
+                if (existingUsers.find(user => user.username === signUpCredentials.username)) {
+                    setSignUpError('Username already exists');
+                    return;
+                }
+                
+                // Create new user
+                const newUser = {
+                    username: signUpCredentials.username,
+                    email: signUpCredentials.email,
+                    password: signUpCredentials.password,
+                    createdAt: new Date().toISOString()
+                };
+                
+                existingUsers.push(newUser);
+                localStorage.setItem('swiftLogisticsUsers', JSON.stringify(existingUsers));
+                
+                // Auto-login the new user
+                setUserLoggedIn(true);
+                setCurrentUser(signUpCredentials.username);
+                localStorage.setItem('swiftLogisticsUser', signUpCredentials.username);
+                setCurrentPage('home');
+                setSignUpCredentials({ username: '', password: '', confirmPassword: '', email: '' });
+                alert('Account created successfully! Welcome to SwiftLogistics.');
             };
 
             const handleCreatePackage = () => {
@@ -195,13 +326,26 @@
                                         <Icon name="search" className="w-4 h-4" />
                                         <span>Track</span>
                                     </button>
-                                    <button 
-                                        onClick={() => setCurrentPage('login')} 
-                                        className={`flex items-center space-x-1 transition ${currentPage === 'login' || currentPage === 'admin' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
-                                    >
-                                        <Icon name="settings" className="w-4 h-4" />
-                                        <span>Admin</span>
-                                    </button>
+                                    {!userLoggedIn ? (
+                                        <button 
+                                            onClick={() => setCurrentPage('userLogin')} 
+                                            className={`flex items-center space-x-1 transition ${currentPage === 'userLogin' ? 'text-blue-600' : 'text-gray-700 hover:text-blue-600'}`}
+                                        >
+                                            <Icon name="user" className="w-4 h-4" />
+                                            <span>Login</span>
+                                        </button>
+                                    ) : (
+                                        <div className="flex items-center space-x-4">
+                                            <span className="text-sm text-gray-600">Welcome, {currentUser}</span>
+                                            <button 
+                                                onClick={handleUserLogout}
+                                                className="flex items-center space-x-1 text-gray-700 hover:text-red-600 transition"
+                                            >
+                                                <Icon name="log-out" className="w-4 h-4" />
+                                                <span>Logout</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Mobile Menu Button */}
@@ -228,12 +372,32 @@
                                     >
                                         Track Package
                                     </button>
-                                    <button 
-                                        onClick={() => { setCurrentPage('login'); setMobileMenuOpen(false); }} 
-                                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
-                                    >
-                                        Admin Panel
-                                    </button>
+                                    {!userLoggedIn ? (
+                                        <>
+                                            <button 
+                                                onClick={() => { setCurrentPage('userLogin'); setMobileMenuOpen(false); }} 
+                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
+                                            >
+                                                User Login
+                                            </button>
+                                            <button 
+                                                onClick={() => { setCurrentPage('signUp'); setMobileMenuOpen(false); }} 
+                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded"
+                                            >
+                                                Sign Up
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="px-4 py-2 space-y-2">
+                                            <div className="text-sm text-gray-600">Welcome, {currentUser}</div>
+                                            <button 
+                                                onClick={() => { handleUserLogout(); setMobileMenuOpen(false); }}
+                                                className="block w-full text-left px-4 py-2 hover:bg-gray-100 rounded text-red-600"
+                                            >
+                                                Logout
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -389,6 +553,116 @@
                         </div>
                     )}
 
+                    {/* User Login Page */}
+                    {currentPage === 'userLogin' && (
+                        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12 fade-in">
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h2 className="text-3xl font-bold mb-6 text-center">User Login</h2>
+                                <div className="space-y-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={userCredentials.username}
+                                        onChange={(e) => setUserCredentials({...userCredentials, username: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={userCredentials.password}
+                                        onChange={(e) => setUserCredentials({...userCredentials, password: e.target.value})}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleUserLogin()}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    {userLoginError && (
+                                        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3">
+                                            <p className="text-red-600 text-sm">{userLoginError}</p>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={handleUserLogin} 
+                                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                                    >
+                                        Login
+                                    </button>
+                                    <div className="text-center">
+                                        <p className="text-sm text-gray-500">
+                                            Don't have an account? 
+                                            <button 
+                                                onClick={() => setCurrentPage('signUp')}
+                                                className="text-blue-600 hover:text-blue-800 ml-1"
+                                            >
+                                                Sign up
+                                            </button>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Sign Up Page */}
+                    {currentPage === 'signUp' && (
+                        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12 fade-in">
+                            <div className="bg-white rounded-2xl shadow-xl p-8">
+                                <h2 className="text-3xl font-bold mb-6 text-center">Create Account</h2>
+                                <div className="space-y-4">
+                                    <input
+                                        type="text"
+                                        placeholder="Username"
+                                        value={signUpCredentials.username}
+                                        onChange={(e) => setSignUpCredentials({...signUpCredentials, username: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    <input
+                                        type="email"
+                                        placeholder="Email"
+                                        value={signUpCredentials.email}
+                                        onChange={(e) => setSignUpCredentials({...signUpCredentials, email: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Password"
+                                        value={signUpCredentials.password}
+                                        onChange={(e) => setSignUpCredentials({...signUpCredentials, password: e.target.value})}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="Confirm Password"
+                                        value={signUpCredentials.confirmPassword}
+                                        onChange={(e) => setSignUpCredentials({...signUpCredentials, confirmPassword: e.target.value})}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleSignUp()}
+                                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                                    />
+                                    {signUpError && (
+                                        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-3">
+                                            <p className="text-red-600 text-sm">{signUpError}</p>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={handleSignUp} 
+                                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                                    >
+                                        Create Account
+                                    </button>
+                                    <div className="text-center">
+                                        <p className="text-sm text-gray-500">
+                                            Already have an account? 
+                                            <button 
+                                                onClick={() => setCurrentPage('userLogin')}
+                                                className="text-blue-600 hover:text-blue-800 ml-1"
+                                            >
+                                                Sign in
+                                            </button>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Admin Login */}
                     {currentPage === 'login' && !isAdminLoggedIn && (
                         <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-12 fade-in">
@@ -409,7 +683,6 @@
                                     >
                                         Login
                                     </button>
-                                    <p className="text-sm text-gray-500 text-center">Demo password: admin123</p>
                                 </div>
                             </div>
                         </div>
@@ -649,6 +922,14 @@
                                         <li>Terms of Service</li>
                                         <li>Privacy Policy</li>
                                         <li>Contact Support</li>
+                                        <li>
+                                            <button 
+                                                onClick={() => setCurrentPage('login')} 
+                                                className="text-gray-400 hover:text-white transition-colors"
+                                            >
+                                                Admin Access
+                                            </button>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
